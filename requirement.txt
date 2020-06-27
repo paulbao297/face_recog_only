@@ -1,0 +1,4 @@
+#python 3.6
+pip install opencv-python
+pip install tensorflow==1.15
+pip install keras
