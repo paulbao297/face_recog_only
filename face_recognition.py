@@ -9,14 +9,15 @@ from mtcnn_master.mtcnn.mtcnn import MTCNN
 from facenet_face_recognition_master.fr_utils import *
 from facenet_face_recognition_master.inception_blocks_v2 import *
 from tensorflow.keras import backend as K
-import joblib
+from sklearn.externals import joblib
 import argparse
-#import pymongo
+import pymongo
 from datetime import datetime
 import json
 import pytz
 
 
+        
 #create triploss function
 def triplet_loss(y_true, y_pred, alpha = 0.3):
     anchor, positive, negative = y_pred[0], y_pred[1], y_pred[2]
@@ -53,7 +54,7 @@ def who_is_it(image, database, model):
     # Loop over the database dictionary's names and encodings.
     for (name, db_enc) in database.items():
         dist = np.linalg.norm(db_enc - encoding)
-        print('distance for %s is %s' %(name, dist))
+        #print('distance for %s is %s' %(name, dist))
         if dist < min_dist:
             min_dist = dist
             identity = name
@@ -64,14 +65,14 @@ def who_is_it(image, database, model):
         identity=identity.split("_")[0]
         return identity
 
-#config
+print("config")
 font = cv2.FONT_HERSHEY_SIMPLEX
 fontScale = 1
 color = (255, 255, 255)
 thickness = 2
 
 
-#prepare face_detection
+print("prepare face_detection")
 detector = MTCNN()
 K.set_image_data_format('channels_first')
 FRmodel = faceRecoModel(input_shape=(3, 96, 96))
@@ -79,9 +80,14 @@ FRmodel = faceRecoModel(input_shape=(3, 96, 96))
 FRmodel.compile(optimizer = 'adam', loss = triplet_loss, metrics = ['accuracy'])
 load_weights_from_FaceNet(FRmodel)
 
-
+print("connect database-server")
+myclient = pymongo.MongoClient("mongodb+srv://VuGiaBao:bao0902429190@cluster0-c4dmj.azure.mongodb.net/face_recognition?retryWrites=true&w=majority")
+mydb = myclient["Attendance_checking"]
+CSDL_col = mydb["CSDL"]
+Cham_cong_col = mydb["Cham_cong"]
+Cham_cong_col.delete_many({"ID":"VuGiaBao"})
         
-#call database func
+print("call database func")
 data=prepare_database()
 cap = cv2.VideoCapture(0)
 
@@ -107,6 +113,18 @@ while(True):
         image=cv2.putText(image,id,(bounding_box[0],bounding_box[1]+bounding_box[3]),font,  
                        fontScale, color, thickness, cv2.LINE_AA)
         print (id)
+
+        #push database
+        if id == None:
+            pass
+        else:
+            ID_found={"ID":id}
+            res=CSDL_col.find_one(ID_found,{"_id":0})
+            res['realtime']= datetime.now(pytz.timezone("Asia/Bangkok"))
+            Cham_cong_col.insert_one(res)
+
+
+
     cv2.imshow("image",image)
     # Display the resulting frame
     if cv2.waitKey(1) & 0xFF == ord('q'):
