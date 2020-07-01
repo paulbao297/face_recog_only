@@ -14,7 +14,6 @@ import argparse
 import pymongo
 from datetime import datetime
 import json
-import pytz
 
 
         
@@ -85,7 +84,7 @@ myclient = pymongo.MongoClient("mongodb+srv://VuGiaBao:bao0902429190@cluster0-c4
 mydb = myclient["Attendance_checking"]
 CSDL_col = mydb["CSDL"]
 Cham_cong_col = mydb["Cham_cong"]
-Cham_cong_col.delete_many({"ID":"VuGiaBao"})
+#Cham_cong_col.delete_many({"ID":"VuGiaBao"})
         
 print("call database func")
 data=prepare_database()
@@ -120,7 +119,8 @@ while(True):
         else:
             ID_found={"ID":id}
             res=CSDL_col.find_one(ID_found,{"_id":0})
-            res['realtime']= datetime.now(pytz.timezone("Asia/Bangkok"))
+            res['realtime']=datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            print("date and time",res['realtime'])
             Cham_cong_col.insert_one(res)
 
 
