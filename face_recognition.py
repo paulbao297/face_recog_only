@@ -119,8 +119,10 @@ while(True):
         else:
             ID_found={"ID":id}
             res=CSDL_col.find_one(ID_found,{"_id":0})
-            res['realtime']=datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            print("date and time",res['realtime'])
+            res['Day_Month_Year']=datetime.now().strftime("%d/%m/%Y")
+            res['Time']=datetime.now().strftime("%H:%M:%S")
+            print("Day_Month_Year",res['Day_Month_Year'])
+            print("Time",res['Time'])
             Cham_cong_col.insert_one(res)
 
 
